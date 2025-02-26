@@ -1,9 +1,13 @@
-FROM apache/airflow:2.6.0-python3.9
-USER root
-COPY requirements.txt ./requirements.txt
+FROM apache/airflow:2.6.3-python3.11
+
+# Install additional requirements BEFORE switching to airflow user
+RUN pip install --no-cache-dir uv
+
+# Switch to airflow user
 USER airflow
-RUN pip install uv && \
-    uv pip install -r requirements.txt --system && \
-    pip uninstall -y uv && \
-    apk del build-deps && \
-    rm -rf /var/cache/apk/*
+
+# Copy and install remaining requirements
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+WORKDIR /home/airflow

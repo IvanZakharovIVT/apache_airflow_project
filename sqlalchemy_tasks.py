@@ -1,8 +1,13 @@
+import logging
+
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
 from database.session import SessionLocal
+
+
+logger = logging.getLogger(__name__)
 
 default_args = {
     'owner': 'airflow',
@@ -19,6 +24,11 @@ def execute_sql_task(task_id, sql_query):
             return result.fetchall()
     return _execute_task
 
+def execute_logger_task(task_id):
+    def _execute_task(**kwargs):
+        logger.info(f"executing task {task_id}")
+    return _execute_task
+
 dag = DAG(
     'sqlalchemy_dag',
     default_args=default_args,
@@ -28,19 +38,19 @@ dag = DAG(
 
 task1 = PythonOperator(
     task_id='first_task',
-    python_callable=execute_sql_task('first_task', 'SELECT * FROM table1'),
+    python_callable=execute_logger_task(task_id='third_task'),
     dag=dag
 )
 
 task2 = PythonOperator(
     task_id='second_task',
-    python_callable=execute_sql_task('second_task', 'SELECT * FROM table2'),
+    python_callable=execute_logger_task(task_id='third_task'),
     dag=dag
 )
 
 task3 = PythonOperator(
     task_id='third_task',
-    python_callable=execute_sql_task('third_task', 'SELECT * FROM table3'),
+    python_callable=execute_logger_task(task_id='third_task'),
     dag=dag
 )
 
